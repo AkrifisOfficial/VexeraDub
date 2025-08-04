@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VexeraDubbing - Лучшая озвучка аниме</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --primary-dark: #6a1cb9;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --light: #f5f5f5;
+            --gray: #2a2a2a;
+            --card-bg: #1e1e1e;
+            --card-hover: #2c2c2c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 60px;
+        }
+        
+        header {
+            background-color: var(--dark);
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            color: var(--primary);
+            font-size: 28px;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            background: linear-gradient(90deg, #ff6b6b, #8a2be2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+        
+        nav a {
+            color: var(--light);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        nav a:hover, nav a.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1635189779577-555debfa8e88?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
+            margin-bottom: 50px;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+        }
+        
+        .hero h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #e0e0e0;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(138, 43, 226, 0.3);
+        }
+        
+        .btn-admin {
+            background-color: #ff6b6b;
+        }
+        
+        .btn-admin:hover {
+            background-color: #ff5252;
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            margin: 40px 0 30px;
+            text-align: center;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #8a2be2);
+            border-radius: 2px;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        .anime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .anime-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .anime-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            background-color: var(--card-hover);
+        }
+        
+        .card-img {
+            height: 350px;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .card-content {
+            padding: 20px;
+        }
+        
+        .card-content h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .card-content p {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .episodes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .episode {
+            background-color: var(--primary);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .episode:hover {
+            background-color: var(--primary-dark);
+            transform: scale(1.05);
+        }
+        
+        .admin-panel {
+            background-color: var(--dark);
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 800px;
+            margin: 50px auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-group label {
+            font-weight: 500;
+            color: #ddd;
+        }
+        
+        .form-group input, 
+        .form-group textarea, 
+        .form-group select {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--gray);
+            background-color: #2a2a2a;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus, 
+        .form-group textarea:focus, 
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        footer {
+            background-color: var(--dark);
+            padding: 30px 5%;
+            text-align: center;
+            margin-top: 60px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .social-links a {
+            color: var(--light);
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: var(--primary);
+        }
+        
+        .copyright {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: var(--dark);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            color: #aaa;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: white;
+        }
+        
+        .watch-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 0;
+        }
+        
+        .video-player {
+            width: 100%;
+            max-width: 800px;
+            background-color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .video-player video {
+            width: 100%;
+            display: block;
+        }
+        
+        .anime-info {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .anime-info h2 {
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .anime-info p {
+            color: #b0b0b0;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h2 {
+                font-size: 2.2rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .anime-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+            
+            nav ul {
+                gap: 10px;
+            }
+            
+            .logo h1 {
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .hero {
+                height: 400px;
+            }
+            
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+            
+            .anime-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            background-color: #4CAF50;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Уведомление -->
+    <div class="notification" id="notification">Операция выполнена успешно!</div>
+    
+    <!-- Главная страница -->
+    <div id="main-page">
+        <header>
+            <div class="logo">
+                <i class="fas fa-dragon"></i>
+                <h1>VexeraDubbing</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Главная</a></li>
+                    <li><a href="#">Каталог</a></li>
+                    <li><a href="#">Новинки</a></li>
+                    <li><a href="#">О нас</a></li>
+                    <li><a href="#" id="admin-link">Админ-панель</a></li>
+                </ul>
+            </nav>
+        </header>
+        
+        <div class="hero">
+            <div class="hero-content">
+                <h2>Лучшая озвучка аниме от VexeraDubbing</h2>
+                <p>Смотрите любимые аниме в профессиональной озвучке, наслаждайтесь качественным переводом и отличным звуком. Только лучшие тайтлы в нашей коллекции!</p>
+                <a href="#" class="btn">Смотреть сейчас</a>
+            </div>
+        </div>
+        
+        <div class="container">
+            <h2 class="section-title">Популярные аниме</h2>
+            <div class="anime-grid" id="anime-container">
+                <!-- Аниме карточки будут сгенерированы скриптом -->
+            </div>
+            
+            <h2 class="section-title">Новые серии</h2>
+            <div class="anime-grid" id="new-episodes-container">
+                <!-- Новые серии будут сгенерированы скриптом -->
+            </div>
+        </div>
+        
+        <footer>
+            <div class="footer-content">
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-vk"></i></a>
+                    <a href="#"><i class="fab fa-telegram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                    <a href="#"><i class="fab fa-discord"></i></a>
+                </div>
+                <div class="copyright">
+                    © 2023 VexeraDubbing. Все права защищены. Весь контент предоставлен для ознакомления.
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Страница просмотра -->
+    <div id="watch-page" class="hidden">
+        <header>
+            <div class="logo">
+                <i class="fas fa-dragon"></i>
+                <h1>VexeraDubbing</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" id="back-link"><i class="fas fa-arrow-left"></i> Назад</a></li>
+                </ul>
+            </nav>
+        </header>
+        
+        <div class="watch-container">
+            <div class="video-player">
+                <video controls id="anime-player">
+                    <source src="" type="video/mp4">
+                    Ваш браузер не поддерживает видео тег.
+                </video>
+            </div>
+            
+            <div class="anime-info">
+                <h2 id="anime-title">Название аниме</h2>
+                <p id="anime-description">Описание аниме...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Админ-панель -->
+    <div id="admin-page" class="hidden">
+        <header>
+            <div class="logo">
+                <i class="fas fa-dragon"></i>
+                <h1>Админ-панель VexeraDubbing</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" id="admin-back-link"><i class="fas fa-arrow-left"></i> На главную</a></li>
+                    <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
+                </ul>
+            </nav>
+        </header>
+        
+        <div class="container">
+            <div class="admin-panel">
+                <h2 class="section-title">Добавить новое аниме</h2>
+                <form class="admin-form" id="add-anime-form">
+                    <div class="form-group">
+                        <label for="anime-name">Название аниме</label>
+                        <input type="text" id="anime-name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="anime-description-admin">Описание</label>
+                        <textarea id="anime-description-admin" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="anime-genre">Жанр</label>
+                        <input type="text" id="anime-genre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="anime-image">Ссылка на изображение</label>
+                        <input type="text" id="anime-image" required>
+                    </div>
+                    
+                    <button type="submit" class="btn">Добавить аниме</button>
+                </form>
+                
+                <h2 class="section-title" style="margin-top: 50px;">Добавить новую серию</h2>
+                <form class="admin-form" id="add-episode-form">
+                    <div class="form-group">
+                        <label for="anime-select">Выберите аниме</label>
+                        <select id="anime-select" required>
+                            <option value="">-- Выберите аниме --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="episode-number">Номер серии</label>
+                        <input type="number" id="episode-number" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="episode-video">Ссылка на видео</label>
+                        <input type="text" id="episode-video" required>
+                    </div>
+                    
+                    <div class="admin-actions">
+                        <button type="submit" class="btn">Добавить серию</button>
+                        <button type="button" class="btn btn-admin" id="manage-anime">Управление аниме</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно входа -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-login">&times;</span>
+            <h2 class="section-title">Вход в админ-панель</h2>
+            <form class="admin-form" id="login-form">
+                <div class="form-group">
+                    <label for="admin-email">Email</label>
+                    <input type="email" id="admin-email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-password">Пароль</label>
+                    <input type="password" id="admin-password" required>
+                </div>
+                
+                <button type="submit" class="btn">Войти</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script>
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0v92q_Fq_iED1Sbu2xug7hZjQUiK4vH8",
+            authDomain: "vexeradubbing-a8a40.firebaseapp.com",
+            projectId: "vexeradubbing-a8a40",
+            storageBucket: "vexeradubbing-a8a40.firebasestorage.app",
+            messagingSenderId: "977285669703",
+            appId: "1:977285669703:web:0e479be8f28eb2b093a262"
+        };
+        
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+    </script>
+    
+    <!-- Основной скрипт -->
+    <script>
+        // Элементы страниц
+        const mainPage = document.getElementById('main-page');
+        const watchPage = document.getElementById('watch-page');
+        const adminPage = document.getElementById('admin-page');
+        const loginModal = document.getElementById('login-modal');
+        const notification = document.getElementById('notification');
+        
+        // Элементы админ-панели
+        const animeSelect = document.getElementById('anime-select');
+        const addAnimeForm = document.getElementById('add-anime-form');
+        const addEpisodeForm = document.getElementById('add-episode-form');
+        const loginForm = document.getElementById('login-form');
+        
+        // Данные приложения
+        let animeData = [];
+        let currentAnime = null;
+        let currentEpisode = null;
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            // Загрузка данных аниме
+            loadAnimeData();
+            
+            // Обработчики событий
+            document.getElementById('admin-link').addEventListener('click', showLoginModal);
+            document.getElementById('admin-back-link').addEventListener('click', showMainPage);
+            document.getElementById('back-link').addEventListener('click', showMainPage);
+            document.getElementById('close-login').addEventListener('click', () => loginModal.style.display = 'none');
+            document.getElementById('logout-link').addEventListener('click', logout);
+            document.getElementById('manage-anime').addEventListener('click', () => {
+                showNotification('Функционал управления аниме в разработке');
+            });
+            
+            // Обработчики форм
+            addAnimeForm.addEventListener('submit', addAnime);
+            addEpisodeForm.addEventListener('submit', addEpisode);
+            loginForm.addEventListener('submit', loginAdmin);
+            
+            // Прослушивание состояния аутентификации
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // Пользователь вошел в систему
+                    console.log('Пользователь авторизован:', user.email);
+                } else {
+                    // Пользователь вышел из системы
+                    console.log('Пользователь не авторизован');
+                }
+            });
+        });
+        
+        // Функция загрузки данных аниме
+        function loadAnimeData() {
+            // В реальном приложении данные будут загружаться из Firebase
+            // Здесь используется mock-данные для демонстрации
+            
+            animeData = [
+                {
+                    id: 1,
+                    title: "Атака Титанов",
+                    description: "Человечество доживает свои последние дни за стенами, защищающими людей от гигантских титанов. Эрен Йегер даёт клятву уничтожить всех титанов после того, как они убили его мать и разрушили его родной город.",
+                    genre: "Экшен, Драма, Фэнтези",
+                    image: "https://images.unsplash.com/photo-1635189779577-555debfa8e88?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                    episodes: [
+                        { number: 1, video: "https://example.com/video1.mp4" },
+                        { number: 2, video: "https://example.com/video2.mp4" },
+                        { number: 3, video: "https://example.com/video3.mp4" }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Наруто",
+                    description: "История о Наруто Узумаки, шумном и непослушном ниндзя-подростке, который мечтает достичь всеобщего признания и стать Хокаге — главой своего селения и сильнейшим ниндзя.",
+                    genre: "Экшен, Приключения, Комедия",
+                    image: "https://images.unsplash.com/photo-1541562232579-512a21360020?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                    episodes: [
+                        { number: 1, video: "https://example.com/naruto1.mp4" },
+                        { number: 2, video: "https://example.com/naruto2.mp4" }
+                    ]
+                },
+                {
+                    id: 3,
+                    title: "Блич",
+                    description: "Ичиго Куросаки — обычный подросток, который с детства обладал способностью видеть призраков. Однажды он случайно получает силы синигами от Рукии Кучики и начинает защищать людей от злых духов.",
+                    genre: "Экшен, Приключения, Сверхъестественное",
+                    image: "https://images.unsplash.com/photo-1577985051167-0d49eec21977?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                    episodes: [
+                        { number: 1, video: "https://example.com/bleach1.mp4" },
+                        { number: 2, video: "https://example.com/bleach2.mp4" },
+                        { number: 3, video: "https://example.com/bleach3.mp4" },
+                        { number: 4, video: "https://example.com/bleach4.mp4" }
+                    ]
+                },
+                {
+                    id: 4,
+                    title: "Ван-Пис",
+                    description: "Монки Д. Луффи мечтает стать Королём Пиратов. Отправившись в плавание, он набирает команду пиратов Соломенной Шляпы и вместе с ними путешествует по Гранд Лайн в поисках величайшего сокровища — Ван-Пис.",
+                    genre: "Экшен, Приключения, Комедия",
+                    image: "https://images.unsplash.com/photo-1635805737707-575885ab0820?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                    episodes: [
+                        { number: 1, video: "https://example.com/onepiece1.mp4" }
+                    ]
+                }
+            ];
+            
+            renderAnime();
+            renderNewEpisodes();
+            populateAnimeSelect();
+        }
+        
+        // Функция отрисовки аниме на главной странице
+        function renderAnime() {
+            const container = document.getElementById('anime-container');
+            container.innerHTML = '';
+            
+            animeData.forEach(anime => {
+                const card = document.createElement('div');
+                card.className = 'anime-card';
+                card.innerHTML = `
+                    <div class="card-img" style="background-image: url('${anime.image}')"></div>
+                    <div class="card-content">
+                        <h3>${anime.title}</h3>
+                        <p>${anime.description}</p>
+                        <div class="episodes">
+                            ${anime.episodes.slice(0, 3).map(ep => 
+                                `<a href="#" class="episode" data-anime="${anime.id}" data-episode="${ep.number}">${ep.number}</a>`
+                            ).join('')}
+                            ${anime.episodes.length > 3 ? `<span class="episode">+${anime.episodes.length - 3}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Добавление обработчиков событий для эпизодов
+            document.querySelectorAll('.episode').forEach(ep => {
+                ep.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const animeId = this.getAttribute('data-anime');
+                    const episodeNum = this.getAttribute('data-episode');
+                    playEpisode(animeId, episodeNum);
+                });
+            });
+        }
+        
+        // Функция отрисовки новых эпизодов
+        function renderNewEpisodes() {
+            const container = document.getElementById('new-episodes-container');
+            container.innerHTML = '';
+            
+            // Берем последние 4 эпизода из всех аниме
+            const newEpisodes = [];
+            animeData.forEach(anime => {
+                anime.episodes.forEach(ep => {
+                    newEpisodes.push({
+                        anime: anime,
+                        episode: ep
+                    });
+                });
+            });
+            
+            // Сортируем по номеру эпизода (в реальном приложении по дате)
+            newEpisodes.sort((a, b) => b.episode.number - a.episode.number);
+            
+            // Берем последние 4
+            const latestEpisodes = newEpisodes.slice(0, 4);
+            
+            latestEpisodes.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'anime-card';
+                card.innerHTML = `
+                    <div class="card-img" style="background-image: url('${item.anime.image}')"></div>
+                    <div class="card-content">
+                        <h3>${item.anime.title} - ${item.episode.number} серия</h3>
+                        <p>${item.anime.description.substring(0, 100)}...</p>
+                        <a href="#" class="btn" data-anime="${item.anime.id}" data-episode="${item.episode.number}">Смотреть</a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Добавление обработчиков событий для кнопок "Смотреть"
+            document.querySelectorAll('#new-episodes-container .btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const animeId = this.getAttribute('data-anime');
+                    const episodeNum = this.getAttribute('data-episode');
+                    playEpisode(animeId, episodeNum);
+                });
+            });
+        }
+        
+        // Функция воспроизведения эпизода
+        function playEpisode(animeId, episodeNum) {
+            // Находим аниме и эпизод
+            const anime = animeData.find(a => a.id == animeId);
+            const episode = anime.episodes.find(e => e.number == episodeNum);
+            
+            if (anime && episode) {
+                currentAnime = anime;
+                currentEpisode = episode;
+                
+                // Обновляем страницу просмотра
+                document.getElementById('anime-title').textContent = `${anime.title} - Серия ${episode.number}`;
+                document.getElementById('anime-description').textContent = anime.description;
+                
+                // В реальном приложении здесь будет установка src видео
+                // document.getElementById('anime-player').src = episode.video;
+                
+                // Переключаемся на страницу просмотра
+                mainPage.classList.add('hidden');
+                adminPage.classList.add('hidden');
+                watchPage.classList.remove('hidden');
+            }
+        }
+        
+        // Функция показа главной страницы
+        function showMainPage(e) {
+            if (e) e.preventDefault();
+            mainPage.classList.remove('hidden');
+            watchPage.classList.add('hidden');
+            adminPage.classList.add('hidden');
+            loginModal.style.display = 'none';
+        }
+        
+        // Функция показа модального окна входа
+        function showLoginModal(e) {
+            e.preventDefault();
+            loginModal.style.display = 'flex';
+        }
+        
+        // Функция входа в админ-панель
+        function loginAdmin(e) {
+            e.preventDefault();
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            
+            // В реальном приложении будет использоваться Firebase Authentication
+            if (email === 'admin@vexeradub.ru' && password === 'vexeraadmin123') {
+                loginModal.style.display = 'none';
+                mainPage.classList.add('hidden');
+                watchPage.classList.add('hidden');
+                adminPage.classList.remove('hidden');
+            } else {
+                showNotification('Неверный email или пароль', 'error');
+            }
+        }
+        
+        // Функция выхода из админ-панели
+        function logout() {
+            showMainPage();
+            showNotification('Вы успешно вышли из системы');
+        }
+        
+        // Функция добавления нового аниме
+        function addAnime(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('anime-name').value;
+            const description = document.getElementById('anime-description-admin').value;
+            const genre = document.getElementById('anime-genre').value;
+            const image = document.getElementById('anime-image').value;
+            
+            // В реальном приложении здесь будет запись в Firebase Firestore
+            const newAnime = {
+                id: animeData.length + 1,
+                title: name,
+                description: description,
+                genre: genre,
+                image: image,
+                episodes: []
+            };
+            
+            animeData.push(newAnime);
+            
+            // Обновляем интерфейс
+            renderAnime();
+            renderNewEpisodes();
+            populateAnimeSelect();
+            
+            // Очищаем форму
+            addAnimeForm.reset();
+            
+            showNotification('Аниме успешно добавлено!');
+        }
+        
+        // Функция добавления новой серии
+        function addEpisode(e) {
+            e.preventDefault();
+            
+            const animeId = animeSelect.value;
+            const episodeNumber = document.getElementById('episode-number').value;
+            const videoUrl = document.getElementById('episode-video').value;
+            
+            // Находим аниме
+            const anime = animeData.find(a => a.id == animeId);
+            
+            if (anime) {
+                // Добавляем серию
+                anime.episodes.push({
+                    number: parseInt(episodeNumber),
+                    video: videoUrl
+                });
+                
+                // Обновляем интерфейс
+                renderAnime();
+                renderNewEpisodes();
+                
+                // Очищаем форму
+                addEpisodeForm.reset();
+                
+                showNotification('Серия успешно добавлена!');
+            }
+        }
+        
+        // Функция заполнения выпадающего списка аниме
+        function populateAnimeSelect() {
+            animeSelect.innerHTML = '<option value="">-- Выберите аниме --</option>';
+            animeData.forEach(anime => {
+                const option = document.createElement('option');
+                option.value = anime.id;
+                option.textContent = anime.title;
+                animeSelect.appendChild(option);
+            });
+        }
+        
+        // Функция показа уведомления
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.style.backgroundColor = type === 'error' ? '#f44336' : '#4CAF50';
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
