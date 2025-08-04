@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VexeraDubbing - Админ-панель</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --primary-dark: #6a1cb9;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --light: #f5f5f5;
+            --gray: #2a2a2a;
+            --card-bg: #1e1e1e;
+            --success: #4CAF50;
+            --error: #f44336;
+            --warning: #ff9800;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .admin-container {
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 15px;
+            padding: 40px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .logo i {
+            color: var(--primary);
+            font-size: 36px;
+        }
+        
+        .logo h1 {
+            font-size: 32px;
+            background: linear-gradient(90deg, #ff6b6b, #8a2be2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+        
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #ddd;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group input, 
+        .form-group textarea, 
+        .form-group select {
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            background: rgba(37, 37, 64, 0.7);
+            color: white;
+            font-size: 1.05rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus, 
+        .form-group textarea:focus, 
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            text-align: center;
+            margin-top: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(138, 43, 226, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #3d8b40);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            border-radius: 12px;
+            color: white;
+            background: linear-gradient(135deg, var(--success), #3d8b40);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            max-width: 500px;
+            opacity: 0;
+            transform: translateY(-30px);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .notification.error {
+            background: linear-gradient(135deg, var(--error), #d32f2f) !important;
+        }
+        
+        .notification.warning {
+            background: linear-gradient(135deg, var(--warning), #f57c00) !important;
+        }
+        
+        .notification i {
+            font-size: 2rem;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        
+        .notification-message {
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+        
+        .anime-preview {
+            background: rgba(30, 30, 46, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            border: 1px solid #444;
+            display: none;
+        }
+        
+        .anime-preview-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .anime-poster {
+            width: 100px;
+            height: 140px;
+            border-radius: 10px;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .anime-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: white;
+        }
+        
+        .anime-info p {
+            color: #b0b0b0;
+            max-width: 500px;
+        }
+        
+        .episode-list {
+            margin-top: 20px;
+        }
+        
+        .episode-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #252540;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .episode-number {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        .episode-status {
+            font-size: 0.95rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--success), #3d8b40);
+            color: white;
+        }
+        
+        .status-exists {
+            background: linear-gradient(135deg, var(--warning), #e68a00);
+            color: black;
+        }
+        
+        .debug-info {
+            background: rgba(30, 30, 46, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #aaa;
+            border: 1px solid #444;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .debug-title {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 600px) {
+            .admin-container {
+                padding: 30px 20px;
+            }
+            
+            .admin-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .anime-preview-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-dragon"></i>
+                <h1>VexeraDubbing - Админ-панель</h1>
+            </div>
+            <p>Добавление новых серий аниме</p>
+        </div>
+        
+        <form class="admin-form" id="add-episode-form">
+            <div class="form-group">
+                <label for="anime-select">
+                    <i class="fas fa-film"></i> Выберите аниме
+                </label>
+                <select id="anime-select" required>
+                    <option value="">-- Загрузка аниме... --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="episode-number">
+                    <i class="fas fa-list-ol"></i> Номер серии
+                </label>
+                <input type="number" id="episode-number" min="1" required placeholder="1">
+            </div>
+            
+            <div class="form-group">
+                <label for="episode-title">
+                    <i class="fas fa-heading"></i> Название серии (опционально)
+                </label>
+                <input type="text" id="episode-title" placeholder="Название серии">
+            </div>
+            
+            <div class="form-group">
+                <label for="episode-video">
+                    <i class="fas fa-video"></i> Ссылка на видео
+                </label>
+                <input type="text" id="episode-video" required placeholder="https://example.com/video.mp4">
+            </div>
+            
+            <div class="admin-actions">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-plus-circle"></i> Добавить серию
+                </button>
+                <button type="button" class="btn" id="preview-btn">
+                    <i class="fas fa-eye"></i> Предпросмотр
+                </button>
+                <button type="button" class="btn" id="reload-btn">
+                    <i class="fas fa-sync-alt"></i> Обновить список
+                </button>
+            </div>
+            
+            <div class="anime-preview" id="anime-preview">
+                <div class="anime-preview-header">
+                    <div class="anime-poster" id="anime-poster"></div>
+                    <div class="anime-info">
+                        <h3 id="preview-title">Название аниме</h3>
+                        <p id="preview-description">Описание аниме...</p>
+                    </div>
+                </div>
+                
+                <div class="episode-list" id="episode-list">
+                    <div class="episode-item">
+                        <span class="episode-number">Серия 1</span>
+                        <span class="episode-status">Будет добавлена</span>
+                    </div>
+                </div>
+            </div>
+        </form>
+        
+        <div class="debug-info">
+            <div class="debug-title"><i class="fas fa-bug"></i> Информация о системе:</div>
+            <div id="debug-content">Загрузка данных...</div>
+        </div>
+    </div>
+    
+    <!-- Уведомление -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <div class="notification-content">
+            <div class="notification-title">Успешно!</div>
+            <div class="notification-message" id="notification-message">Операция выполнена</div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script>
+        // ЗАМЕНИТЕ ЭТИ ДАННЫЕ НА ВАШИ РЕАЛЬНЫЕ ДАННЫЕ ИЗ FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0v92q_Fq_iED1Sbu2xug7hZjQUiK4vH8",
+            authDomain: "vexeradubbing-a8a40.firebaseapp.com",
+            projectId: "vexeradubbing-a8a40",
+            storageBucket: "vexeradubbing-a8a40.firebasestorage.app",
+            messagingSenderId: "977285669703",
+            appId: "1:977285669703:web:0e479be8f28eb2b093a262"
+        };
+        
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+    
+    <!-- Основной скрипт с исправленной логикой добавления серий -->
+    <script>
+        // Элементы страницы
+        const animeSelect = document.getElementById('anime-select');
+        const addEpisodeForm = document.getElementById('add-episode-form');
+        const previewBtn = document.getElementById('preview-btn');
+        const reloadBtn = document.getElementById('reload-btn');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+        const animePreview = document.getElementById('anime-preview');
+        const animePoster = document.getElementById('anime-poster');
+        const previewTitle = document.getElementById('preview-title');
+        const previewDescription = document.getElementById('preview-description');
+        const episodeList = document.getElementById('episode-list');
+        const debugContent = document.getElementById('debug-content');
+        
+        // Данные приложения
+        let animeData = [];
+        let selectedAnime = null;
+        let currentEpisode = null;
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            // Загрузка данных аниме из Firebase
+            loadAnimeData();
+            
+            // Обработчики событий
+            addEpisodeForm.addEventListener('submit', addEpisode);
+            previewBtn.addEventListener('click', showPreview);
+            reloadBtn.addEventListener('click', loadAnimeData);
+            animeSelect.addEventListener('change', handleAnimeSelect);
+        });
+        
+        // Функция загрузки данных аниме из Firebase Firestore
+        function loadAnimeData() {
+            debugContent.textContent = "Загрузка данных аниме из Firebase...";
+            
+            db.collection("animes").get()
+                .then((querySnapshot) => {
+                    animeData = [];
+                    animeSelect.innerHTML = '<option value="">-- Выберите аниме --</option>';
+                    
+                    if (querySnapshot.empty) {
+                        debugContent.textContent += "\nКоллекция animes пуста!";
+                        showNotification("Коллекция animes пуста. Добавьте аниме через консоль Firebase.", "warning");
+                        return;
+                    }
+                    
+                    querySnapshot.forEach((doc) => {
+                        const anime = doc.data();
+                        anime.id = doc.id; // Сохраняем ID документа
+                        animeData.push(anime);
+                        
+                        // Добавляем опцию в выпадающий список
+                        const option = document.createElement('option');
+                        option.value = anime.id;
+                        option.textContent = anime.title;
+                        animeSelect.appendChild(option);
+                    });
+                    
+                    debugContent.textContent += `\nУспешно загружено ${animeData.length} аниме`;
+                    showNotification(`Загружено ${animeData.length} аниме`, "success");
+                })
+                .catch((error) => {
+                    console.error("Ошибка загрузки данных: ", error);
+                    debugContent.textContent += `\nОшибка загрузки: ${error.message}`;
+                    showNotification(`Ошибка загрузки: ${error.message}`, "error");
+                });
+        }
+        
+        // Обработчик выбора аниме
+        function handleAnimeSelect() {
+            const animeId = animeSelect.value;
+            if (!animeId) {
+                animePreview.style.display = 'none';
+                selectedAnime = null;
+                return;
+            }
+            
+            selectedAnime = animeData.find(a => a.id === animeId);
+            if (selectedAnime) {
+                previewTitle.textContent = selectedAnime.title;
+                previewDescription.textContent = selectedAnime.description || "Описание отсутствует";
+                animePoster.style.backgroundImage = `url('${selectedAnime.image || 'https://via.placeholder.com/100x140?text=No+Image'}')`;
+                animePreview.style.display = 'block';
+                
+                // Очищаем список эпизодов
+                episodeList.innerHTML = '';
+            }
+        }
+        
+        // Функция предпросмотра добавляемой серии
+        function showPreview() {
+            if (!selectedAnime) {
+                showNotification("Сначала выберите аниме!", "error");
+                return;
+            }
+            
+            const episodeNumber = parseInt(document.getElementById('episode-number').value);
+            const episodeTitle = document.getElementById('episode-title').value.trim() || `Серия ${episodeNumber}`;
+            const videoUrl = document.getElementById('episode-video').value.trim();
+            
+            if (isNaN(episodeNumber) || episodeNumber < 1) {
+                showNotification("Введите корректный номер серии!", "error");
+                return;
+            }
+            
+            if (!videoUrl) {
+                showNotification("Введите ссылку на видео!", "error");
+                return;
+            }
+            
+            // Создаем объект эпизода для предпросмотра
+            currentEpisode = {
+                number: episodeNumber,
+                title: episodeTitle,
+                video: videoUrl
+            };
+            
+            // Очищаем список эпизодов
+            episodeList.innerHTML = '';
+            
+            // Добавляем новую серию в предпросмотр
+            const episodeItem = document.createElement('div');
+            episodeItem.className = 'episode-item';
+            
+            // Проверяем, существует ли уже такая серия
+            const episodeExists = selectedAnime.episodes && 
+                                 selectedAnime.episodes.some(ep => ep.number === episodeNumber);
+            
+            episodeItem.innerHTML = `
+                <span class="episode-number">${episodeTitle}</span>
+                <span class="episode-status ${episodeExists ? 'status-exists' : ''}">
+                    ${episodeExists ? 'Уже существует' : 'Будет добавлена'}
+                </span>
+            `;
+            
+            episodeList.appendChild(episodeItem);
+            animePreview.style.display = 'block';
+        }
+        
+        // Функция добавления новой серии (исправленная)
+        async function addEpisode(e) {
+            e.preventDefault();
+            
+            try {
+                if (!selectedAnime) {
+                    throw new Error("Сначала выберите аниме!");
+                }
+                
+                const episodeNumber = parseInt(document.getElementById('episode-number').value);
+                const episodeTitle = document.getElementById('episode-title').value.trim() || `Серия ${episodeNumber}`;
+                const videoUrl = document.getElementById('episode-video').value.trim();
+                
+                if (isNaN(episodeNumber) || episodeNumber < 1) {
+                    throw new Error("Введите корректный номер серии!");
+                }
+                
+                if (!videoUrl) {
+                    throw new Error("Введите ссылку на видео!");
+                }
+                
+                // Создаем объект эпизода
+                const newEpisode = {
+                    number: episodeNumber,
+                    title: episodeTitle,
+                    video: videoUrl,
+                    addedAt: new Date().toISOString()
+                };
+                
+                // Получаем ссылку на документ аниме
+                const animeRef = db.collection("animes").doc(selectedAnime.id);
+                
+                // Обновляем документ - добавляем серию в массив
+                await animeRef.update({
+                    episodes: firebase.firestore.FieldValue.arrayUnion(newEpisode),
+                    updatedAt: new Date().toISOString()
+                });
+                
+                // Обновляем локальные данные
+                if (!selectedAnime.episodes) {
+                    selectedAnime.episodes = [];
+                }
+                selectedAnime.episodes.push(newEpisode);
+                
+                // Обновляем предпросмотр
+                showPreview();
+                
+                // Очищаем форму
+                document.getElementById('episode-number').value = '';
+                document.getElementById('episode-title').value = '';
+                
+                showNotification(`Серия "${episodeTitle}" успешно добавлена!`, "success");
+                debugContent.textContent += `\n[${new Date().toLocaleTimeString()}] Добавлена серия ${episodeNumber} к "${selectedAnime.title}"`;
+            } catch (error) {
+                console.error("Ошибка добавления серии: ", error);
+                
+                let errorMessage = error.message;
+                if (error.code === 'permission-denied') {
+                    errorMessage = "Ошибка прав доступа! Проверьте правила Firestore.";
+                } else if (error.code === 'not-found') {
+                    errorMessage = "Документ не найден! Возможно, аниме было удалено.";
+                }
+                
+                showNotification(`Ошибка: ${errorMessage}`, "error");
+                debugContent.textContent += `\n[${new Date().toLocaleTimeString()}] Ошибка: ${errorMessage}`;
+            }
+        }
+        
+        // Функция показа уведомления
+        function showNotification(message, type = 'success') {
+            notificationMessage.textContent = message;
+            notification.className = 'notification show';
+            
+            // Устанавливаем соответствующий стиль
+            if (type === 'error') {
+                notification.classList.add('error');
+                notification.querySelector('i').className = 'fas fa-exclamation-circle';
+            } else if (type === 'warning') {
+                notification.classList.add('warning');
+                notification.querySelector('i').className = 'fas fa-exclamation-triangle';
+            } else {
+                notification.classList.remove('error', 'warning');
+                notification.querySelector('i').className = 'fas fa-check-circle';
+            }
+            
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
