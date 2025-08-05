@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Админ-панель аниме</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --secondary: #6a0dad;
+            --dark: #121212;
+            --light: #f5f5f5;
+            --danger: #e53935;
+            --success: #43a047;
+            --card-bg: rgba(30, 30, 46, 0.7);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark), #1a1a2e);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            font-size: 32px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .logo p {
+            color: #aaa;
+            font-size: 16px;
+        }
+        
+        .logo-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50px;
+            padding: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .tab.active {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #ddd;
+        }
+        
+        input {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .auth-message {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .auth-message.success {
+            background: rgba(67, 160, 71, 0.3);
+            border: 1px solid #43a047;
+        }
+        
+        .auth-message.error {
+            background: rgba(229, 57, 53, 0.3);
+            border: 1px solid #e53935;
+        }
+        
+        .form-footer {
+            text-align: center;
+            margin-top: 25px;
+            color: #aaa;
+            font-size: 15px;
+        }
+        
+        .form-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .password-container {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 500px) {
+            .auth-container {
+                padding: 25px;
+            }
+            
+            .logo h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <i class="fas fa-dragon logo-icon"></i>
+            <h1>Аниме Админ</h1>
+            <p>Панель управления контентом</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="login">Вход</div>
+            <div class="tab" data-tab="register">Регистрация</div>
+        </div>
+        
+        <!-- Форма входа -->
+        <div id="loginForm">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" placeholder="Введите ваш email">
+            </div>
+            
+            <div class="form-group password-container">
+                <label for="loginPassword">Пароль</label>
+                <input type="password" id="loginPassword" placeholder="Введите пароль">
+                <i class="fas fa-eye toggle-password" id="toggleLoginPassword"></i>
+            </div>
+            
+            <button id="loginBtn" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Войти в панель
+            </button>
+            
+            <div class="form-footer">
+                Нет аккаунта? <a href="#" id="switchToRegister">Зарегистрироваться</a>
+            </div>
+        </div>
+        
+        <!-- Форма регистрации -->
+        <div id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label for="registerName">Имя администратора</label>
+                <input type="text" id="registerName" placeholder="Ваше имя">
+            </div>
+            
+            <div class="form-group">
+                <label for="registerEmail">Email</label>
+                <input type="email" id="registerEmail" placeholder="Введите ваш email">
+            </div>
+            
+            <div class="form-group password-container">
+                <label for="registerPassword">Пароль</label>
+                <input type="password" id="registerPassword" placeholder="Придумайте пароль">
+                <i class="fas fa-eye toggle-password" id="toggleRegisterPassword"></i>
+            </div>
+            
+            <div class="form-group password-container">
+                <label for="registerPassword2">Подтверждение пароля</label>
+                <input type="password" id="registerPassword2" placeholder="Повторите пароль">
+                <i class="fas fa-eye toggle-password" id="toggleRegisterPassword2"></i>
+            </div>
+            
+            <button id="registerBtn" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Зарегистрироваться
+            </button>
+            
+            <div class="form-footer">
+                Уже есть аккаунт? <a href="#" id="switchToLogin">Войти</a>
+            </div>
+        </div>
+        
+        <div id="authMessage" class="auth-message"></div>
+    </div>
+    
+    <script>
+        // Конфигурация Firebase (должна совпадать с админ-панелью)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0v92q_Fq_iED1Sbu2xug7hZjQUiK4vH8",
+            authDomain: "vexeradubbing-a8a40.firebaseapp.com",
+            projectId: "vexeradubbing-a8a40",
+            storageBucket: "vexeradubbing-a8a40.firebasestorage.app",
+            messagingSenderId: "977285669703",
+            appId: "1:977285669703:web:0e479be8f28eb2b093a262"
+        };
+        
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        
+        // DOM элементы
+        const tabs = document.querySelectorAll('.tab');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const authMessage = document.getElementById('authMessage');
+        const switchToRegister = document.getElementById('switchToRegister');
+        const switchToLogin = document.getElementById('switchToLogin');
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            initEventListeners();
+            initPasswordToggles();
+            
+            // Проверяем, авторизован ли пользователь
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // Пользователь авторизован, перенаправляем в админку
+                    window.location.href = 'admin.html';
+                }
+            });
+        });
+        
+        // Инициализация обработчиков событий
+        function initEventListeners() {
+            // Переключение вкладок
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    if (tab.dataset.tab === 'login') {
+                        loginForm.style.display = 'block';
+                        registerForm.style.display = 'none';
+                    } else {
+                        loginForm.style.display = 'none';
+                        registerForm.style.display = 'block';
+                    }
+                    
+                    authMessage.style.display = 'none';
+                });
+            });
+            
+            // Переключение на регистрацию
+            switchToRegister.addEventListener('click', (e) => {
+                e.preventDefault();
+                tabs[1].click();
+            });
+            
+            // Переключение на вход
+            switchToLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                tabs[0].click();
+            });
+            
+            // Вход
+            document.getElementById('loginBtn').addEventListener('click', login);
+            
+            // Регистрация
+            document.getElementById('registerBtn').addEventListener('click', register);
+        }
+        
+        // Переключение видимости пароля
+        function initPasswordToggles() {
+            // Для формы входа
+            const toggleLoginPassword = document.getElementById('toggleLoginPassword');
+            const loginPassword = document.getElementById('loginPassword');
+            
+            toggleLoginPassword.addEventListener('click', () => {
+                if (loginPassword.type === 'password') {
+                    loginPassword.type = 'text';
+                    toggleLoginPassword.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    loginPassword.type = 'password';
+                    toggleLoginPassword.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+            
+            // Для формы регистрации
+            const toggleRegisterPassword = document.getElementById('toggleRegisterPassword');
+            const registerPassword = document.getElementById('registerPassword');
+            
+            toggleRegisterPassword.addEventListener('click', () => {
+                if (registerPassword.type === 'password') {
+                    registerPassword.type = 'text';
+                    toggleRegisterPassword.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    registerPassword.type = 'password';
+                    toggleRegisterPassword.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+            
+            // Для подтверждения пароля
+            const toggleRegisterPassword2 = document.getElementById('toggleRegisterPassword2');
+            const registerPassword2 = document.getElementById('registerPassword2');
+            
+            toggleRegisterPassword2.addEventListener('click', () => {
+                if (registerPassword2.type === 'password') {
+                    registerPassword2.type = 'text';
+                    toggleRegisterPassword2.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    registerPassword2.type = 'password';
+                    toggleRegisterPassword2.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+        }
+        
+        // Функция входа
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showAuthMessage('Пожалуйста, заполните все поля', 'error');
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Успешный вход
+                    showAuthMessage('Успешный вход! Перенаправляем в админ-панель...', 'success');
+                    
+                    // Перенаправление после небольшой задержки
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 1500);
+                })
+                .catch((error) => {
+                    console.error('Ошибка входа:', error);
+                    let errorMessage = 'Ошибка входа';
+                    
+                    switch(error.code) {
+                        case 'auth/user-not-found':
+                            errorMessage = 'Пользователь с таким email не найден';
+                            break;
+                        case 'auth/wrong-password':
+                            errorMessage = 'Неверный пароль';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Некорректный email';
+                            break;
+                        default:
+                            errorMessage = error.message;
+                    }
+                    
+                    showAuthMessage(errorMessage, 'error');
+                });
+        }
+        
+        // Функция регистрации
+        function register() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const password2 = document.getElementById('registerPassword2').value;
+            
+            // Валидация
+            if (!name || !email || !password || !password2) {
+                showAuthMessage('Пожалуйста, заполните все поля', 'error');
+                return;
+            }
+            
+            if (password !== password2) {
+                showAuthMessage('Пароли не совпадают', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAuthMessage('Пароль должен содержать минимум 6 символов', 'error');
+                return;
+            }
+            
+            // Регистрация пользователя
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Успешная регистрация
+                    showAuthMessage('Регистрация прошла успешно! Выполняется вход...', 'success');
+                    
+                    // Автоматический вход после регистрации
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 1500);
+                })
+                .catch((error) => {
+                    console.error('Ошибка регистрации:', error);
+                    let errorMessage = 'Ошибка регистрации';
+                    
+                    switch(error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage = 'Этот email уже используется';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Некорректный email';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'Пароль слишком слабый';
+                            break;
+                        default:
+                            errorMessage = error.message;
+                    }
+                    
+                    showAuthMessage(errorMessage, 'error');
+                });
+        }
+        
+        // Показать сообщение
+        function showAuthMessage(message, type) {
+            authMessage.textContent = message;
+            authMessage.className = `auth-message ${type}`;
+            authMessage.style.display = 'block';
+            
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                authMessage.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
