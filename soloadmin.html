@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Админка VexeraDubbing</title>
+  <style>
+    /* ... предыдущие стили ... */
+    .login-screen { text-align: center; padding: 50px 20px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Экран входа -->
+    <div id="loginScreen" class="login-screen card">
+      <h1>Вход в админ-панель</h1>
+      <input type="password" id="adminPassword" placeholder="Пароль администратора">
+      <button onclick="login()">Войти</button>
+      <div id="loginStatus"></div>
+    </div>
+
+    <!-- Контент админки (скрыт до входа) -->
+    <div id="adminContent" class="hidden">
+      <h1>Добавить новое аниме</h1>
+      <!-- ... форма добавления аниме ... -->
+      <!-- ... форма добавления серии ... -->
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_PASSWORD = "adminvexera123"; // Поменяйте на свой пароль!
+
+    function login() {
+      const password = document.getElementById('adminPassword').value;
+      if (password === ADMIN_PASSWORD) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('adminContent').classList.remove('hidden');
+      } else {
+        document.getElementById('loginStatus').innerHTML = 
+          '<p class="error">Неверный пароль!</p>';
+      }
+    }
+
+    // ... остальные функции addAnime() и addEpisode() ...
+  </script>
+</body>
+</html>
